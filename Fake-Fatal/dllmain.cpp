@@ -2,6 +2,9 @@
 #include <windows.h>
 #include <tlhelp32.h>
 #include <vector>
+#include <random>
+#include <chrono>
+#include <thread>
 
 static HANDLE g_hThread = NULL;
 static DWORD  g_threadId = 0;
@@ -168,6 +171,47 @@ void StopHotkeyThread()
     g_threadId = 0;
 }
 
+static DWORD GenerateRandomInterval()
+{
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<DWORD> dist(5 * 60 * 1000, 4 * 60 * 60 * 1000);
+    return dist(gen);
+}
+
+DWORD WINAPI RandomPopupThreadProc(LPVOID lpParam)
+{
+    while (true)
+    {
+        DWORD interval = GenerateRandomInterval();
+        std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+
+        ShowMessageBox(L"Random Popup!", L"Attention");
+    }
+    return 0;
+}
+
+BOOL StartRandomPopupThread()
+{
+    static HANDLE hRandomPopupThread = NULL;
+    if (hRandomPopupThread != NULL) return TRUE;
+
+    hRandomPopupThread = CreateThread(
+        NULL,
+        0,
+        RandomPopupThreadProc,
+        NULL,
+        0,
+        NULL
+    );
+
+    if (hRandomPopupThread == NULL) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule,
     DWORD  ul_reason_for_call,
     LPVOID lpReserved
@@ -179,6 +223,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
         g_hModule = hModule;
         DisableThreadLibraryCalls(hModule);
         StartHotkeyThread();
+        StartRandomPopupThread();
         break;
 
     case DLL_PROCESS_DETACH:
