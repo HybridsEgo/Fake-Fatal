@@ -186,7 +186,7 @@ DWORD WINAPI RandomPopupThreadProc(LPVOID lpParam)
         DWORD interval = GenerateRandomInterval();
         std::this_thread::sleep_for(std::chrono::milliseconds(interval));
 
-        ShowMessageBox(L"Random Popup!", L"Attention");
+        ShowMessageBox(L"Fatal error!", L"The UE4-MCC Game has crashed and will close");
     }
     return 0;
 }
